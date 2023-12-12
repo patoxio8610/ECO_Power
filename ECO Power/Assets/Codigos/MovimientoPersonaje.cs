@@ -14,10 +14,18 @@ public class MovimientoPersonaje : MonoBehaviour
     private float velocidadGiro;
     private float fuerzaGravedad = 0;
 
+    private Vector3 posicionIncial;
+    private Quaternion rotacionIncial;
+
+    private bool caer=false;
     private CharacterController controladorCuerpo;
+    private Animator animaciones;
     void Start()
     {
+        posicionIncial = transform.position;
+        rotacionIncial = transform.rotation;
         controladorCuerpo = GetComponent<CharacterController>();
+        animaciones = GetComponent<Animator>();
     }
    
     // Update is called once per frame
@@ -39,16 +47,38 @@ public class MovimientoPersonaje : MonoBehaviour
 
         if (controladorCuerpo.isGrounded)
         {
-            if (Input.GetButton("Jump"))
-            {
-                fuerzaGravedad = 0;
-                fuerzaGravedad = fuerzaSalto;
-            }
+            fuerzaGravedad = 0;
+            if (Input.GetButton("Jump"))           
+                fuerzaGravedad = fuerzaSalto;    
         }
-        else { 
+        else {
             fuerzaGravedad -= gravedad * Time.deltaTime; 
         }
         
         controladorCuerpo.Move(new Vector3(0, fuerzaGravedad, 0) * Time.deltaTime);
+        EstadosAnimaciones(vertical, horizontal);
+    }
+
+    private void EstadosAnimaciones(float vertical, float horizontal)
+    {
+        float direccion = Mathf.Abs(vertical) + Mathf.Abs(horizontal);
+        direccion = Mathf.Clamp(direccion, 0, 1);
+        animaciones.SetFloat("Direccion", direccion);
+        animaciones.SetBool("EnElPiso", controladorCuerpo.isGrounded);
+        if (!controladorCuerpo.isGrounded)
+            animaciones.SetInteger("Salto", (int)fuerzaGravedad);
+    }
+    public void CambiarUbicacion(Transform ubicacion)
+    {
+        posicionIncial = ubicacion.position;
+        rotacionIncial = ubicacion.rotation;
+    }
+    public void Reiniciar()
+    {
+        controladorCuerpo.Move(Vector3.zero);
+        controladorCuerpo.enabled = false;
+        transform.position = posicionIncial;
+        transform.rotation = rotacionIncial;
+        controladorCuerpo.enabled = true;
     }
 }
